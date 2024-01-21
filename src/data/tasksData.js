@@ -174,17 +174,17 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
             count: currentCount + count,
             last_updated: task.last_updated,
             completed: task.completed,
-            amount: task.amount
+            amount: task.amount,
+            subtasks: task.subtasks
         }
     } else {
         if (task) {
-            //{count, newAmount, originalAmount, newDays, oldDays}
             const currentCount = adjustCount({
                 count: task.count,
                 newAmount: amount,
                 originalAmount: task.amount,
                 newDays: selectedDays,
-                originalDays: task.days});
+                originalDays: task.selectedDays});
             await pool.query(`UPDATE tasks SET count = $1, 
                                                amount = $2, 
                                                days = $3, 
@@ -209,7 +209,8 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
                 count: currentCount,
                 last_updated: task.last_updated,
                 completed: task.completed,
-                amount
+                amount,
+                subtasks: task.subtasks
             }
         }
     }

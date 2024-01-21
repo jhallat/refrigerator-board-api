@@ -7,6 +7,7 @@ router.route('/')
    .post(subtaskController.createSubTask);
 
 router.route('/:id')
-    .patch(subtaskController.updateSubTask);
+    .patch(subtaskController.updateSubTask)
+    .delete(subtaskController.deleteSubTask);
 
 module.exports = router;
