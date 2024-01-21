@@ -1,4 +1,5 @@
 const subtaskData = require('./../data/subtasksData');
+const catchAsync = require(`./../common/catchAsync`)
 
 exports.createSubTask = (req, res) => {
     subtaskData.insert(req.body).then((subtask) => {
@@ -21,3 +22,10 @@ exports.updateSubTask = (req, res) => {
         })
     })
 }
+
+exports.deleteSubTask = catchAsync(async (req, res, next) => {
+    await subtaskData.delete(req.params.id);
+    res.status(204).json({
+        status: 'success'
+    })
+})

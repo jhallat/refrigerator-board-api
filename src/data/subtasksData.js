@@ -24,7 +24,10 @@ exports.insert = async ({taskId, description}) => {
 
 exports.findByTask = async (task_id) => {
     const res = await pool.query(
-        'SELECT id, task_id, description, completed, last_updated FROM subtasks WHERE task_id = $1',
+        `SELECT id, task_id, description, completed, last_updated 
+         FROM subtasks 
+         WHERE task_id = $1
+         AND deleted = false`,
         [task_id]
     )
     const subtasks = res.rows.map(row => ({
@@ -34,7 +37,6 @@ exports.findByTask = async (task_id) => {
         completed: row.completed,
         lastUpdated: row.lastUpdated
     }));
-    console.log(subtasks);
     return subtasks;
 }
 
@@ -76,4 +78,16 @@ exports.update = async (id, {completed}) => {
     }
     subtask.completed = completed;
     return subtask;
+}
+
+exports.delete = async (id) => {
+    await pool.query('UPDATE subtasks SET deleted = true WHERE id = $1', [id]);
+    await auditData.insert({
+        tableName: 'subtasks',
+        fieldName: 'deleted',
+        parentId: id,
+        action: 'delete',
+        originalValue: 'false',
+        newValue: 'true'
+    });
 }
