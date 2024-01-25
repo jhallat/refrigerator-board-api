@@ -172,7 +172,7 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
             durationType: task.duration_type,
             selectedDays: task.days,
             count: currentCount + count,
-            last_updated: task.last_updated,
+            lastUpdated: task.last_updated,
             completed: task.completed,
             amount: task.amount,
             subtasks: task.subtasks
@@ -207,7 +207,7 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
                 durationType,
                 selectedDays,
                 count: currentCount,
-                last_updated: task.last_updated,
+                lastUpdated: task.last_updated,
                 completed: task.completed,
                 amount,
                 subtasks: task.subtasks
