@@ -34,7 +34,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteTask = catchAsync(async (req, res, next) => {
-    await taskData.delete(req.params.id)
+    await taskData.deleteOne(req.params.id)
     res.status(204).json({
         status: 'success'
     })

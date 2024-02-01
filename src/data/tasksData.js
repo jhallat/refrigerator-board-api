@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const subtaskData = require('./subtasksData')
 const auditData = require('./auditData');
 
-exports.insert = async ({ description, durationType, selectedDays, amount }) => {
+const insert = async ({ description, durationType, selectedDays, amount }) => {
     const date = new Date();
     const day = date.getDay();
     const count = selectedDays[day] === 1 ? amount : 0;
@@ -52,7 +52,18 @@ const updateCount = (id, newCount) => {
     );
 }
 
-exports.findAll = async () => {
+
+const calculateCompleted = (task) => {
+    if (task.last_updated >= new Date(new Date().toDateString())) {
+        return task.completed;
+    }
+    if (task.duration_type === 0 || task.durationType === 0) {
+        return task.completed;
+    }
+    return task.days[new Date().getDay()] === 1;
+}
+
+const findAll = async () => {
     const res = await pool.query(
         'SELECT id, description, duration_type, days, count, last_updated, completed, amount FROM tasks WHERE deleted = false');
 
@@ -74,18 +85,24 @@ exports.findAll = async () => {
                 newValue: useCount
             });
         }
-        const subtasks = await subtaskData.findByTask(row.id);
-        tasks.push({
-            id: row.id,
-            description: row.description,
-            durationType: row.duration_type,
-            selectedDays: row.days,
-            count: useCount,
-            lastUpdated: row.last_updated,
-            completed: row.completed,
-            amount: row.amount,
-            subtasks
-        })
+        let completed = calculateCompleted(row);
+        if (completed != row.completed) {
+            await updateCompletedStatus(row, completed);
+        }
+        if (!completed) {
+            const subtasks = await subtaskData.findByTask(row.id);
+            tasks.push({
+                id: row.id,
+                description: row.description,
+                durationType: row.duration_type,
+                selectedDays: row.days,
+                count: useCount,
+                lastUpdated: row.last_updated,
+                completed,
+                amount: row.amount,
+                subtasks
+            })
+        }
     }
 
     return tasks;
@@ -148,7 +165,7 @@ const updateCompletedStatus = async (task, completed) => {
     return updated;
 }
 
-exports.update = async (id, { count, description, durationType, selectedDays, amount, completed }) => {
+const update = async (id, { count, description, durationType, selectedDays, amount, completed }) => {
     const task = await findById(id);
     if (completed && completed !== task.completed) {
         return updateCompletedStatus(task, completed);
@@ -169,10 +186,10 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
         return {
             id: task.id,
             description: task.description,
-            durationType: task.duration_type,
+            durationType: task.durationType,
             selectedDays: task.days,
             count: currentCount + count,
-            lastUpdated: task.last_updated,
+            lastUpdated: task.lastUpdated,
             completed: task.completed,
             amount: task.amount,
             subtasks: task.subtasks
@@ -207,7 +224,7 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
                 durationType,
                 selectedDays,
                 count: currentCount,
-                lastUpdated: task.last_updated,
+                lastUpdated: task.lastUpdated,
                 completed: task.completed,
                 amount,
                 subtasks: task.subtasks
@@ -216,7 +233,7 @@ exports.update = async (id, { count, description, durationType, selectedDays, am
     }
 }
 
-exports.delete = async (id) => {
+const deleteOne = async (id) => {
     await pool.query(`UPDATE tasks SET deleted = true WHERE id = $1`,
         [id])
     await auditData.insert({
@@ -228,3 +245,5 @@ exports.delete = async (id) => {
         newValue: 'true'
     });
 }
+
+module.exports = { calculateCompleted, update, deleteOne, findAll, insert };
