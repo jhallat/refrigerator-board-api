@@ -42,7 +42,20 @@ describe('Task Data test suite', () => {
         last_update = new Date(last_update.toDateString());
         const days = [0,0,0,0,0,0,0];
         days[new Date().getDay()] = 1;
-        const actual = sut({duration_type: 1, completed: true, days, last_update});
+        const actual = sut({duration_type: 1, completed: false, days, last_update});
+
+        expect(actual).toBe(expected);
+    })
+
+    it('Should return false for a completed task for multiple instance duration type where day is today and amount is one', () => {
+        const sut = calculateCompleted;
+        const expected = false;
+
+        let last_update = new Date((new Date().getDate() - 1));
+        last_update = new Date(last_update.toDateString());
+        const days = [0,0,0,0,0,0,0];
+        days[new Date().getDay()] = 1;
+        const actual = sut({duration_type: 1, completed: false, days, last_update, amount: 1});
 
         expect(actual).toBe(expected);
     })

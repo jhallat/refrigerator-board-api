@@ -57,7 +57,10 @@ const calculateCompleted = (task) => {
     if (task.last_updated >= new Date(new Date().toDateString())) {
         return task.completed;
     }
-    if (task.duration_type === 0 || task.durationType === 0) {
+    if (task.amount > 0) {
+        return task.completed;
+    }
+    if (task.duration_type === 0 || task.durationType === 0)  {
         return task.completed;
     }
     return task.days[new Date().getDay()] === 1;
