@@ -63,7 +63,10 @@ const calculateCompleted = (task) => {
     if (task.duration_type === 0 || task.durationType === 0)  {
         return task.completed;
     }
-    return task.days[new Date().getDay()] === 1;
+    if (task.days[new Date().getDay()] === 1) {
+        return false;
+    }
+    return task.completed;
 }
 
 const findAll = async () => {
@@ -89,8 +92,10 @@ const findAll = async () => {
             });
         }
         let completed = calculateCompleted(row);
+        let lastUpdated = row.last_updated;
         if (completed != row.completed) {
             await updateCompletedStatus(row, completed);
+            lastUpdated = new Date(new Date().toDateString());
         }
         if (!completed) {
             const subtasks = await subtaskData.findByTask(row.id);
@@ -100,7 +105,7 @@ const findAll = async () => {
                 durationType: row.duration_type,
                 selectedDays: row.days,
                 count: useCount,
-                lastUpdated: row.last_updated,
+                lastUpdated,
                 completed,
                 amount: row.amount,
                 subtasks
