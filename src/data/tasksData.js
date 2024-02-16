@@ -6,7 +6,7 @@ const auditData = require('./auditData');
 const insert = async ({ description, durationType, selectedDays, amount }) => {
     const date = new Date();
     const day = date.getDay();
-    const count = selectedDays[day] === 1 ? amount : 0;
+    const count = selectedDays[day] >= 1 ? selectedDays[day] : 0;
     const id = uuidv4();
 
     const res = await pool.query(
@@ -37,9 +37,7 @@ const calculateAdditionalCount = (last_updated, days, amount) => {
     compare.setDate(compare.getDate() + 1);
     while (today >= compare) {
         const day = compare.getDay();
-        if (days[day] === 1) {
-            additionalCount += amount;
-        }
+        additionalCount += days[day];
         compare.setDate(compare.getDate() + 1);
     }
     return additionalCount;
@@ -57,10 +55,7 @@ const calculateCompleted = (task) => {
     if (task.last_updated >= new Date(new Date().toDateString())) {
         return task.completed;
     }
-    if (task.amount > 0) {
-        return task.completed;
-    }
-    if (task.duration_type === 0 || task.durationType === 0)  {
+    if (task.duration_type !== 1 || task.durationType !== 1)  {
         return task.completed;
     }
     if (task.days[new Date().getDay()] === 1) {
@@ -76,7 +71,7 @@ const findAll = async () => {
     const tasks = [];
     for (let row of res.rows) {
         const additionalCount =
-            row.duration_type === 0 ?
+            row.duration_type !== 2 ?
                 0 :
                 calculateAdditionalCount(row.last_updated, row.days, row.amount);
         let useCount = row.count;
@@ -107,7 +102,7 @@ const findAll = async () => {
                 count: useCount,
                 lastUpdated,
                 completed,
-                amount: row.amount,
+                amount: row.days[new Date().getDay()],
                 subtasks
             })
         }
