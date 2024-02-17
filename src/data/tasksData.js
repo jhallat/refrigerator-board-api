@@ -201,8 +201,8 @@ const update = async (id, { count, description, durationType, selectedDays, amou
         if (task) {
             const currentCount = adjustCount({
                 count: task.count,
-                newAmount: amount,
-                originalAmount: task.amount,
+                newAmount: selectedDays[new Date().getDay()],
+                originalAmount: task.selectedDays[new Date().getDay()],
                 newDays: selectedDays,
                 originalDays: task.selectedDays});
             await pool.query(`UPDATE tasks SET count = $1, 
