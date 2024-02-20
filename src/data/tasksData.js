@@ -3,16 +3,16 @@ const { v4: uuidv4 } = require('uuid');
 const subtaskData = require('./subtasksData')
 const auditData = require('./auditData');
 
-const insert = async ({ description, durationType, selectedDays, amount }) => {
+const insert = async ({ description, durationType, selectedDays, amount, isWeekly }) => {
     const date = new Date();
     const day = date.getDay();
     const count = selectedDays[day] >= 1 ? selectedDays[day] : 0;
     const id = uuidv4();
 
     const res = await pool.query(
-        `INSERT INTO tasks(id, description, duration_type, days, count, last_updated, completed, amount)
-         VALUES($1,$2, $3, $4, $5, $6, $7, $8)`,
-        [id, description, durationType, selectedDays, count, date, false, amount]
+        `INSERT INTO tasks(id, description, duration_type, days, count, last_updated, completed, amount, is_weekly)
+         VALUES($1,$2, $3, $4, $5, $6, $7, $8, $9)`,
+        [id, description, durationType, selectedDays, count, date, false, amount, isWeekly]
     );
     return {
         id,
@@ -22,7 +22,8 @@ const insert = async ({ description, durationType, selectedDays, amount }) => {
         count,
         lastUpdated : date,
         completed : false,
-        amount
+        amount,
+        isWeekly
     }
 }
 
@@ -64,9 +65,21 @@ const calculateCompleted = (task) => {
     return task.completed;
 }
 
+const caclulateAmount = (selectedDays, isWeekly) => {
+    if (isWeekly) {
+        let amount = 0;
+        for (let i = 0; i <= new Date().getDay(); i++) {
+            amount += selectedDays[i];
+        }
+        return amount;
+    } else {
+        return selectedDays[new Date().getDay()];
+    }
+}
+
 const findAll = async () => {
     const res = await pool.query(
-        'SELECT id, description, duration_type, days, count, last_updated, completed, amount FROM tasks WHERE deleted = false');
+        'SELECT id, description, duration_type, days, count, last_updated, completed, amount, is_weekly FROM tasks WHERE deleted = false');
 
     const tasks = [];
     for (let row of res.rows) {
@@ -102,7 +115,8 @@ const findAll = async () => {
                 count: useCount,
                 lastUpdated,
                 completed,
-                amount: row.days[new Date().getDay()],
+                amount: caclulateAmount(row.days, row.is_weekly),
+                isWeekly: row.is_weekly,
                 subtasks
             })
         }
@@ -137,7 +151,8 @@ const findById = async (id) => {
                                          count,
                                          last_updated,
                                          completed,
-                                         amount
+                                         amount,
+                                         is_weekly
                                   FROM tasks WHERE id = $1`, [id]);
     let task;
     if (res.rows.length > 0) {
@@ -152,6 +167,7 @@ const findById = async (id) => {
             lastUpdated: found.last_updated,
             completed: found.completed,
             amount: found.amount,
+            isWeekly: found.is_weekly,
             subtasks
         }
     }
@@ -168,7 +184,8 @@ const updateCompletedStatus = async (task, completed) => {
     return updated;
 }
 
-const update = async (id, { count, description, durationType, selectedDays, amount, completed }) => {
+const update = async (id, { count, description, durationType, selectedDays, amount, completed, isWeekly }) => {
+    console.log(isWeekly);
     const task = await findById(id);
     if (completed && completed !== task.completed) {
         return updateCompletedStatus(task, completed);
@@ -195,6 +212,7 @@ const update = async (id, { count, description, durationType, selectedDays, amou
             lastUpdated: task.lastUpdated,
             completed: task.completed,
             amount: task.amount,
+            isWeekly: task.isWeekly,
             subtasks: task.subtasks
         }
     } else {
@@ -209,9 +227,10 @@ const update = async (id, { count, description, durationType, selectedDays, amou
                                                amount = $2, 
                                                days = $3, 
                                                duration_type = $4, 
-                                               description = $5
-                                WHERE id = $6`,
-                [currentCount, amount, selectedDays, durationType, description, id])
+                                               description = $5,
+                                               is_weekly = $6
+                                WHERE id = $7`,
+                [currentCount, amount, selectedDays, durationType, description, isWeekly, id])
             if (task.count !== currentCount) {
                 await auditData.insert({tableName: 'tasks',
                     fieldName: 'count',
@@ -230,6 +249,7 @@ const update = async (id, { count, description, durationType, selectedDays, amou
                 lastUpdated: task.lastUpdated,
                 completed: task.completed,
                 amount,
+                isWeekly,
                 subtasks: task.subtasks
             }
         }
