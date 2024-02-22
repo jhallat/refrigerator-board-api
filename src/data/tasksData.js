@@ -214,7 +214,7 @@ const update = async (id, { count, description, durationType, selectedDays, amou
             count: currentCount + count,
             lastUpdated: task.lastUpdated,
             completed: task.completed,
-            amount: caclulateAmount(task.days, task.isWeekly, task.durationType),
+            amount: caclulateAmount(task.selectedDays, task.isWeekly, task.durationType),
             isWeekly: task.isWeekly,
             subtasks: task.subtasks
         }
