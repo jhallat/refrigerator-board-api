@@ -146,9 +146,9 @@ describe('Find all ', () => {
         const completed = true;
         const deleted = false;
         await pool.query(
-            `INSERT INTO tasks(id, description, duration_type, days, count, last_updated, completed, amount, deleted)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [taskId, description, durationType, selectedDays, count, yesterday, completed, amount, deleted]
+            `INSERT INTO tasks(id, description, duration_type, days, count, last_updated, completed, amount, deleted, is_weekly)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [taskId, description, durationType, selectedDays, count, yesterday, completed, amount, deleted, false]
         );
 
         const sut = findAll;
@@ -163,7 +163,8 @@ describe('Find all ', () => {
             lastUpdated: today,
             completed: false,
             amount: 0,
-            subtasks: []
+            subtasks: [],
+            isWeekly: false
         });
     });
 })
