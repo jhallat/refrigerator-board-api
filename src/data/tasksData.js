@@ -56,7 +56,8 @@ const calculateCompleted = (task) => {
     if (task.last_updated >= new Date(new Date().toDateString())) {
         return task.completed;
     }
-    if (task.duration_type !== 1 || task.durationType !== 1)  {
+    const durationType = task.duration_type || task.durationType;
+    if (durationType !== 1)  {
         return task.completed;
     }
     if (task.days[new Date().getDay()] === 1) {
@@ -65,7 +66,10 @@ const calculateCompleted = (task) => {
     return task.completed;
 }
 
-const caclulateAmount = (selectedDays, isWeekly) => {
+const caclulateAmount = (selectedDays, isWeekly, durationType) => {
+    if (durationType !== 2) {
+        return 0;
+    }
     if (isWeekly) {
         let amount = 0;
         for (let i = 0; i <= new Date().getDay(); i++) {
@@ -115,7 +119,7 @@ const findAll = async () => {
                 count: useCount,
                 lastUpdated,
                 completed,
-                amount: caclulateAmount(row.days, row.is_weekly),
+                amount: caclulateAmount(row.days, row.is_weekly, row.duration_type),
                 isWeekly: row.is_weekly,
                 subtasks
             })
@@ -185,7 +189,6 @@ const updateCompletedStatus = async (task, completed) => {
 }
 
 const update = async (id, { count, description, durationType, selectedDays, amount, completed, isWeekly }) => {
-    console.log(isWeekly);
     const task = await findById(id);
     if (completed && completed !== task.completed) {
         return updateCompletedStatus(task, completed);
@@ -211,7 +214,7 @@ const update = async (id, { count, description, durationType, selectedDays, amou
             count: currentCount + count,
             lastUpdated: task.lastUpdated,
             completed: task.completed,
-            amount: task.amount,
+            amount: caclulateAmount(task.days, task.isWeekly, task.durationType),
             isWeekly: task.isWeekly,
             subtasks: task.subtasks
         }
@@ -248,7 +251,7 @@ const update = async (id, { count, description, durationType, selectedDays, amou
                 count: currentCount,
                 lastUpdated: task.lastUpdated,
                 completed: task.completed,
-                amount,
+                amount: caclulateAmount(selectedDays, isWeekly, durationType),
                 isWeekly,
                 subtasks: task.subtasks
             }
