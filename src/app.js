@@ -10,9 +10,11 @@ app.use(express.json());
 
 const tasksRoute = require('./routes/tasksRoute');
 const subtasksRoute = require('./routes/subtasksRoute');
+const auditRoute = require('./routes/auditRoute');
 
 app.use('/api/v1/tasks', tasksRoute);
 app.use('/api/v1/subtasks', subtasksRoute);
+app.use('/api/v1/audit', auditRoute);
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Cannot find ${req.originalUrl} on this server`, 404));
