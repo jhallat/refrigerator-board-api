@@ -20,3 +20,25 @@ exports.insert = async({tableName,
         [tableName, fieldName, parentId, action, originalValue, newValue, new Date()]
     )
 }
+
+exports.findTasksWithPage = async (page, pageSize) => {
+    const res = await pool.query(
+        `SELECT id, table_name, field_name, description, action, original_value, new_value, audit_date
+         FROM audit
+         INNER JOIN tasks ON audit.parent_id = tasks.id
+         WHERE table_name = 'tasks'
+         ORDER BY audit_date DESC
+         OFFSET $1 LIMIT $2`,
+        [page * pageSize, pageSize]
+    )
+    return res.rows.map(row => ({
+        id: row.id,
+        tableName: row.table_name,
+        fieldName: row.field_name,
+        description: row.description,
+        action: row.action,
+        originalValue: row.original_value,
+        newValue: row.new_value,
+        auditDate: row.audit_date
+    }));
+}
