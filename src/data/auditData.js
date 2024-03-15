@@ -31,14 +31,22 @@ exports.findTasksWithPage = async (page, pageSize) => {
          OFFSET $1 LIMIT $2`,
         [page * pageSize, pageSize]
     )
-    return res.rows.map(row => ({
-        id: row.id,
-        tableName: row.table_name,
-        fieldName: row.field_name,
-        description: row.description,
-        action: row.action,
-        originalValue: row.original_value,
-        newValue: row.new_value,
-        auditDate: row.audit_date
-    }));
+
+    const count = await pool.query(
+        `SELECT COUNT(*) FROM audit WHERE table_name = 'tasks'`
+    )
+    return {
+        data: res.rows.map(row => ({
+            id: row.id,
+            tableName: row.table_name,
+            fieldName: row.field_name,
+            description: row.description,
+            action: row.action,
+            originalValue: row.original_value,
+            newValue: row.new_value,
+            auditDate: row.audit_date
+        })),
+        nextPageAvailable: count.rows[0].count > (page + 1) * pageSize
+    }
+
 }
