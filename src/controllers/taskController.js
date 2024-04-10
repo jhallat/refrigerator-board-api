@@ -39,3 +39,13 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
         status: 'success'
     })
 })
+
+exports.revertTask = catchAsync(async (req, res, next) => {
+    const revertedTask = await taskData.revert(req.params.auditId)
+    res.status(200).json({
+        status: 'success',
+        data: {
+            task: revertedTask
+        }
+    })
+})

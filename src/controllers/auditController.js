@@ -5,8 +5,7 @@ exports.getTasksAuditsByPage = async (req, res) => {
     res.status(200).json({
         status: 'success',
         results: audits.length,
-        data: {
-            audits
-        }
+        data: audits.data,
+        nextPageAvailable: audits.nextPageAvailable
     })
 }
