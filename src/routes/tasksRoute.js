@@ -11,4 +11,7 @@ router.route('/:id')
     .patch(taskController.updateTask)
     .delete(taskController.deleteTask);
 
+router.route('/revert/:auditId')
+    .put(taskController.revertTask);
+
 module.exports = router;

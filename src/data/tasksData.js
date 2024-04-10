@@ -188,11 +188,19 @@ const updateCompletedStatus = async (task, completed) => {
     return updated;
 }
 
+const restoreCount = (id, newCount) => {
+    pool.query(
+        `UPDATE tasks SET count = $1, last_updated = $2 WHERE id = $3`,
+        [newCount, new Date(), id]
+    );
+}
+
 const update = async (id, { count, description, durationType, selectedDays, amount, completed, isWeekly }) => {
     const task = await findById(id);
     if (completed && completed !== task.completed) {
         return updateCompletedStatus(task, completed);
     }
+    console.log(`Count: ${count}`);
     if (count && count < 0) {
         let currentCount = 0;
         if (task) {
@@ -272,4 +280,19 @@ const deleteOne = async (id) => {
     });
 }
 
-module.exports = { calculateCompleted, update, deleteOne, findAll, insert };
+
+const revert = async (auditId) => {
+    const auditRecord = await auditData.findById(auditId);
+    if (auditRecord) {
+        const task = await findById(auditRecord.parentId);
+        if (task) {
+            if (auditRecord.fieldName === 'count') {
+                restoreCount(task.id, task.count + (auditRecord.originalValue - auditRecord.newValue));
+                await auditData.markAsReverted(auditId);
+                return;
+            }
+        }
+    }
+}
+
+module.exports = { calculateCompleted, update, deleteOne, findAll, insert, revert };
